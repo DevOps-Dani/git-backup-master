@@ -1,0 +1,18 @@
+# Ignore .vscode settings folder
+.vscode
+
+# Ignore Mac system files
+.DS_Store
+
+# Ignore linting settings
+.pylintrc
+
+# Ignore secrets
+client_secret.json
+config.ini
+
+# Ignore log files
+*.log
+
+# Ignore backup files
+*.bak

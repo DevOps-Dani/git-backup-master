@@ -1,0 +1,20 @@
+name: GitHub Backup
+description: Creates archive of all Brainlabs repos on Github and uploads to Google Drive.
+status: building
+  ignore: true
+ownership:
+  owner: dani.westlake
+  maintainers:
+public-info:
+  reach: other
+  tech-implementation: false
+  client-ids:
+  release-date: null
+  tags:
+  departments: Tech
+  platforms: github
+  documentation:
+    docs: https://docs.google.com/document/d/1FSS5rOuo7ps9F1hNQamrlrK-nN97jjhe6yTSVsMJIcg/edit
+tech-info:
+  trackable: true
+  documentation: https://github.com/Brainlabs-Digital/git-backup/blob/main/README.md
