@@ -23,7 +23,7 @@ import argparse
 # Config parser for reading config file with auth key
 import configparser
 from time import sleep
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Import error handling
 import logging
@@ -106,6 +106,8 @@ args = argparser.parse_args()
 # Set run date for filename
 today = datetime.now()
 rundate = today.strftime("%Y-%m-%d-%H-%M")
+# Set retention period in days for logs and archives
+retention = 30
 # Set logfile location as the root of project
 ROOT_DIR = path.dirname(path.abspath(__name__))
 LOGFILE = f"{ROOT_DIR}/git_backup_{rundate}.log"
@@ -582,6 +584,47 @@ An error occourred while uploading the archive")
         raise
 
 
+def remove_old_archives_and_logs():
+    """Remove old archives and logs"""
+    last_date = str((today - timedelta(retention)).date())
+
+    logging.info("Removing old archives and logs")
+    cleanup_message = f"Retention period set to \
+{retention} days - Files older than {last_date} will be removed"
+    logging.info(cleanup_message)
+
+    service_account_info = ROOT_DIR + "/" + args.driveauth
+    scopes = ["https://www.googleapis.com/auth/drive"]
+
+    try:
+        creds = service_account.Credentials.from_service_account_file(
+            service_account_info, scopes=scopes
+        )
+
+        service = build("drive", "v3", credentials=creds, cache_discovery=False)
+
+        response = service.files().list(
+            q="'" + config[args.googledrive]["logfolder"] + "' in parents \
+or '" + config[args.googledrive]["folder"] + "' in parents \
+and createdTime < " + last_date + "'",
+            pageSize=100,
+            fields="nextPageToken, files(id, name)",
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True
+            ).execute()
+
+        files = response.get('files', [])
+
+        for f in files:
+            try:
+                service.files().delete(fileId=f["id"]).execute()
+            except GoogleErrors.Error as error:
+                logging.error(error)
+
+    except GoogleErrors.Error as error:
+        logging.error(error)
+
+
 def main():
     """Main process
     Check GitHub login is OK`
@@ -652,6 +695,8 @@ Skipping wait between checks")
                         pause = 0
                     else:
                         logging.info("Uploads complete")
+                logging.info("Cleaning up old archives and logs")
+                remove_old_archives_and_logs()
                 if args.level.upper() != "DEBUG":
                     upload_logfile()
                 else:
